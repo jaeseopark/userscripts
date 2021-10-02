@@ -2,7 +2,7 @@
 // @name           RFD
 // @namespace      www.redflagdeals.com
 // @description    RFD
-// @include        https://*.redflagdeals.com/*
+// @include        https://forums.redflagdeals.com/*
 // @require        https://code.jquery.com/jquery-3.6.0.slim.min.js
 // ==/UserScript==
 
@@ -56,5 +56,6 @@ hideElement(".forums_nav");
 
 $('.primary_content').css({ 'padding-right': '10px' });
 $('#site_container').css({ 'margin-bottom': 0 });
+$('#site_content').css({ 'max-width': '1280px' });
 
 highlightVotes();

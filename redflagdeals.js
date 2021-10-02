@@ -43,16 +43,18 @@ function highlightVotes() {
     });
 }
 
-addGlobalStyle('.primary_content { padding-right: 10px; }');
-addGlobalStyle(' body.is_scrolled #site_container { margin-bottom: 0; } }')
 hideElement("#header_billboard_bottom");
 hideElement("#site_header");
 hideElement("#site_footer");
+
 hideElement(".thread_display_options_container");
 hideElement(".forums_page_header_container");
 hideElement(".sidebar_content");
 hideElement(".forum_content");
+
 hideElement(".forums_nav");
 
+$('.primary_content').css({ 'padding-right': '10px' });
+$('#site_container').css({ 'margin-bottom': 0 });
+
 highlightVotes();
-$('.primary_content').css({ 'padding': '10px' });

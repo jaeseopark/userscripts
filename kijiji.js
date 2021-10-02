@@ -10,12 +10,9 @@
 // @grant        none
 // ==/UserScript==
 
-const TAG_PRESET = [
-    "dell", "lenovo", "hp", "optiplex", "elitedesk", "prodesk", "g1", "g2",
-    "sff",
-    "intel", "amd", "i3", "i5", "i7",
-    "ssd", "hdd"
-];
+/**
+ * Utility functions
+ */
 
 function addGlobalStyle(css) {
     var head, style;
@@ -29,6 +26,36 @@ function addGlobalStyle(css) {
 
 function hideElement(selector) {
     $(selector).css({ "display": "none" });
+}
+
+/**
+ * Clutter removal functions
+ */
+
+function hideAds() {
+    hideElement(".sponsored-ad-container");
+    hideElement(".inline-banner");
+    hideElement("iframe");
+}
+
+function hideClutter() {
+    hideAds();
+    hideElement("#Footer");
+}
+
+/**
+ * Listing improvement functions
+ */
+
+const TAG_PRESET = [
+    "dell", "lenovo", "hp", "optiplex", "elitedesk", "prodesk", "g1", "g2",
+    "sff",
+    "intel", "amd", "i3", "i5", "i7",
+    "ssd", "hdd"
+];
+
+function configureTagStyling() {
+    addGlobalStyle(".itemtag { background-color: gainsboro; padding: 3px; margin-right: 5px; font-size: large; }");
 }
 
 function processDate(datePostedElement) {
@@ -67,17 +94,16 @@ function processSearchResult(div) {
     });
 };
 
-addGlobalStyle(".itemtag { background-color: gainsboro; padding: 3px; margin-right: 5px; font-size: large; }");
+function processAllSearchResults() {
+    configureTagStyling();
+    $(".container-results").each(function () {
+        processSearchResult(this);
+    });
+}
 
-// hide ads
-hideElement(".sponsored-ad-container");
-hideElement(".third-party");
-hideElement(".inline-banner");
-hideElement("iframe");
+/**
+ * Code execution starts here
+ */
 
-// hide unnecessary elements
-hideElement("#Footer");
-
-$(".container-results").each(function () {
-    processSearchResult(this);
-});
+hideClutter();
+processAllSearchResults();

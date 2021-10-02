@@ -1,23 +1,13 @@
 // ==UserScript==
-// @name           RFD
+// @name           RFD Forum Styler
 // @namespace      www.redflagdeals.com
-// @description    RFD
+// @description    RFD Forum Styler
 // @include        https://forums.redflagdeals.com/*
 // @require        https://code.jquery.com/jquery-3.6.0.slim.min.js
 // ==/UserScript==
 
-function addGlobalStyle(css) {
-    var head, style;
-    head = document.getElementsByTagName('head')[0];
-    if (!head) { return; }
-    style = document.createElement('style');
-    style.type = 'text/css';
-    style.innerHTML = css;
-    head.appendChild(style);
-}
-
 function hideElement(selector) {
-    addGlobalStyle(selector + " { display:none; } ");
+    $(selector).css({"display": "none"});
 }
 
 function highlightVotes() {

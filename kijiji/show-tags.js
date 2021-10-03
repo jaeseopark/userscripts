@@ -1,8 +1,9 @@
 // ==UserScript==
-// @name         Kijiji
+// @name         Show tags
 // @namespace    http://www.kijiji.ca/
 // @version      0.1
-// @author       You
+// @author       Jaeseo Park
+// @description  Picks up predefined keywords from listing titles/descriptions
 // @match        https://www.kijiji.ca/*
 // @icon         https://www.google.com/s2/favicons?domain=kijiji.ca
 // @require      https://code.jquery.com/jquery-3.6.0.slim.min.js
@@ -10,9 +11,12 @@
 // @grant        none
 // ==/UserScript==
 
-/**
- * Utility functions
- */
+const TAG_PRESET = [
+    "dell", "lenovo", "hp", "optiplex", "elitedesk", "prodesk", "g1", "g2",
+    "sff",
+    "intel", "amd", "i3", "i5", "i7",
+    "ssd", "hdd"
+];
 
 function addGlobalStyle(css) {
     var head, style;
@@ -23,36 +27,6 @@ function addGlobalStyle(css) {
     style.innerHTML = css;
     head.appendChild(style);
 }
-
-function hideElement(selector) {
-    $(selector).css({ "display": "none" });
-}
-
-/**
- * Clutter removal functions
- */
-
-function hideAds() {
-    hideElement(".sponsored-ad-container");
-    hideElement(".inline-banner");
-    hideElement("iframe");
-}
-
-function hideClutter() {
-    hideAds();
-    hideElement("#Footer");
-}
-
-/**
- * Listing improvement functions
- */
-
-const TAG_PRESET = [
-    "dell", "lenovo", "hp", "optiplex", "elitedesk", "prodesk", "g1", "g2",
-    "sff",
-    "intel", "amd", "i3", "i5", "i7",
-    "ssd", "hdd"
-];
 
 function configureTagStyling() {
     addGlobalStyle(".itemtag { background-color: gainsboro; padding: 3px; margin-right: 5px; font-size: large; }");
@@ -94,16 +68,7 @@ function processSearchResult(div) {
     });
 };
 
-function processAllSearchResults() {
-    configureTagStyling();
-    $(".container-results").each(function () {
-        processSearchResult(this);
-    });
-}
-
-/**
- * Code execution starts here
- */
-
-hideClutter();
-processAllSearchResults();
+configureTagStyling();
+$(".container-results").each(function () {
+    processSearchResult(this);
+});

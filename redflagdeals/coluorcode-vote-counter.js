@@ -1,7 +1,7 @@
 // ==UserScript==
-// @name           RFD Forum Styler
+// @name           Colourcode vote counter
 // @namespace      www.redflagdeals.com
-// @description    RFD Forum Styler
+// @description    Colourcodes vote counters and make them larger
 // @include        https://forums.redflagdeals.com/*
 // @require        https://code.jquery.com/jquery-3.6.0.slim.min.js
 // ==/UserScript==

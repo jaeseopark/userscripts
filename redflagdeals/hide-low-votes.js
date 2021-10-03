@@ -1,12 +1,12 @@
 // ==UserScript==
-// @name           RFD Forum Vote Filter
+// @name           Hide low votes
 // @namespace      www.redflagdeals.com
-// @description    RFD Forum Vote Filter
+// @description    Hides threads with vote count < threshold
 // @include        https://forums.redflagdeals.com/*
 // @require        https://code.jquery.com/jquery-3.6.0.slim.min.js
 // ==/UserScript==
 
-const THRESHOLD = 50;
+const THRESHOLD = 20;
 
 $("li.topic").each(function () {
     let vote = 0;

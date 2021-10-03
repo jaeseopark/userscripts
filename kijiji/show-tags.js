@@ -7,7 +7,6 @@
 // @match        https://www.kijiji.ca/*
 // @icon         https://www.google.com/s2/favicons?domain=kijiji.ca
 // @require      https://code.jquery.com/jquery-3.6.0.slim.min.js
-// @require      https://momentjs.com/downloads/moment.min.js
 // @grant        none
 // ==/UserScript==
 

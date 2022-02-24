@@ -8,9 +8,19 @@
 // @grant        none
 // ==/UserScript==
 
-const SQFT_REGEX = /SqFt(.*)Year/g;
+const SQFT_REGEX = /SqFt([0-9,]*)Year/g;
+const PRICE_REGEX = /\$([0-9,]*).[0-9]/g;
+
 let SQFT_THRESHOLD = 1500;
+let PRICE_THRESHOLD = 600000;
+
 const LISTINGS = [];
+
+function htmlToElement(html) {
+    var template = document.createElement('template');
+    template.innerHTML = html.trim();
+    return template.content.firstChild;
+}
 
 const stripHtml = (html) => {
    let tmp = document.createElement("DIV");
@@ -18,45 +28,75 @@ const stripHtml = (html) => {
    return tmp.textContent || tmp.innerText || "";
 };
 
-const isTwoStorey = (div) => div.outerHTML.includes("2 Storey");
-
-const getSqft = (div) => {
+const getIntByRegex = (div, regex) => {
     const strippedHtml = stripHtml(div.innerHTML)
-    const firstMatch = strippedHtml.match(SQFT_REGEX)[0];
-    return parseInt(firstMatch.replace(/\D/g,''));
-};
+    const matches = strippedHtml.match(regex);
+    if (!matches) return null;
 
+    return parseInt(matches[0].split(".")[0].replace(/\D/g,''));
+}
+
+const isTwoStorey = (div) => div.outerHTML.includes("2 Storey");
 const isTooSmall = (div) => {
-    return getSqft(div) < SQFT_THRESHOLD;
+    const sqft = getIntByRegex(div, SQFT_REGEX);
+    return sqft !== null && sqft < SQFT_THRESHOLD;;
+};
+const isTooExpensive = (div) => {
+    const price = getIntByRegex(div, PRICE_REGEX);
+    return price !== null && price > PRICE_THRESHOLD;
 };
 
 const processListing = (div) => {
-    const shouldHide = !isTwoStorey(div) || isTooSmall(div);
+    const shouldHide = !isTwoStorey(div) || isTooSmall(div) || isTooExpensive(div);
     div.style.display = shouldHide ? "none": "";
 };
 
-const processListings = () => LISTINGS.forEach(processListing);
-
-const prependSqftInput = () => {
-    const element = document.createElement("input");
-    element.type = "number";
-    element.value = SQFT_THRESHOLD;
-    element.addEventListener('change', (event) => {
-        SQFT_THRESHOLD = event.target.valueAsNumber;
-        processListings();
-    });
-
-    document.body.prepend(element);
+const discoverListings = () => {
+    LISTINGS.length = 0;
+    $(".multiLineDisplay").each(function () { LISTINGS.push(this); });
 };
 
-const discoverListings = () => {
-    $(".multiLineDisplay").each(function () {
-        LISTINGS.push(this);
+const processListings = () => {
+    discoverListings();
+    LISTINGS.forEach(processListing);
+};
+
+const prependFilterBar = () => {
+    const sqftInput = document.createElement("input");
+    sqftInput.type = "number";
+    sqftInput.value = SQFT_THRESHOLD;
+    sqftInput.addEventListener('change', (event) => {
+        SQFT_THRESHOLD = event.target.valueAsNumber;
     });
-}
 
-// ------------- Start script -------------
+    const priceInput = htmlToElement("<input type='number' />");
+    priceInput.value = PRICE_THRESHOLD;
+    priceInput.addEventListener('change', (event) => {
+        PRICE_THRESHOLD = event.target.valueAsNumber;
+    });
 
-prependSqftInput();
-discoverListings();
-processListings();
+    const applyButton = htmlToElement("<button>Apply</button>");
+    applyButton.addEventListener('click', processListings);
+
+    const resetButton = htmlToElement("<button>Cancel</button>");
+    resetButton.addEventListener('click', () => {
+        LISTINGS.forEach((div) => { div.style.display = ""; });
+    });
+
+    const filterBar = document.createElement("div");
+    filterBar.style.backgroundColor = "white";
+    filterBar.style.zIndex = 1;
+    filterBar.style.position = "fixed";
+
+    filterBar.prepend(resetButton);
+    filterBar.prepend(applyButton);
+    filterBar.prepend(priceInput);
+    filterBar.prepend(htmlToElement("<label>Price</label>"));
+    filterBar.prepend(sqftInput);
+    filterBar.prepend(htmlToElement("<label>Sqft</label>"));
+    document.body.prepend(filterBar);
+};
+
+// ------------- Start of script -------------
+
+prependFilterBar();

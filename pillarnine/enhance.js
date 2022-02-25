@@ -10,6 +10,7 @@
 
 const SQFT_REGEX = /SqFt([0-9,]*)Year/g;
 const PRICE_REGEX = /\$([0-9,]*).[0-9]/g;
+const DIMENSION_REGEX = /([0-9]*)`([0-9]*)"/g;
 
 let SQFT_THRESHOLD = 1500;
 let PRICE_THRESHOLD = 600000;
@@ -46,14 +47,14 @@ const isTooExpensive = (div) => {
     return price !== null && price > PRICE_THRESHOLD;
 };
 
-const processListing = (div) => {
-    const shouldHide = !isTwoStorey(div) || isTooSmall(div) || isTooExpensive(div);
-    div.style.display = shouldHide ? "none": "";
-};
-
 const discoverListings = () => {
     LISTINGS.length = 0;
     $(".multiLineDisplay").each(function () { LISTINGS.push(this); });
+};
+
+const processListing = (div) => {
+    const shouldHide = !isTwoStorey(div) || isTooSmall(div) || isTooExpensive(div);
+    div.style.display = shouldHide ? "none": "";
 };
 
 const processListings = () => {
@@ -61,7 +62,32 @@ const processListings = () => {
     LISTINGS.forEach(processListing);
 };
 
-const prependFilterBar = () => {
+const toMeters = (imperial) => {
+    const components = imperial.replace('"', "").split("`").map(s => parseInt(s));
+    return (components[0] * 12 + components[1]) * 0.0254;
+};
+
+const convertTextToMetric = (element) => {
+    const matches = element.textContent.match(DIMENSION_REGEX);
+    if (!matches) return;
+
+    let newTextContent = element.textContent;
+    matches.forEach(match => {
+        const meters = toMeters(match);
+        const metersFormatted = meters.toFixed(2) + "m";
+        newTextContent = newTextContent.replace(match, metersFormatted);
+    });
+    element.textContent = newTextContent;
+};
+
+const convertToMetric = () => {
+    $("span").each(function () {
+        if (this.children.length > 0) return;
+        convertTextToMetric(this);
+    });
+};
+
+const createToolbar = () => {
     const sqftInput = document.createElement("input");
     sqftInput.type = "number";
     sqftInput.value = SQFT_THRESHOLD;
@@ -75,28 +101,32 @@ const prependFilterBar = () => {
         PRICE_THRESHOLD = event.target.valueAsNumber;
     });
 
-    const applyButton = htmlToElement("<button>Apply</button>");
+    const applyButton = htmlToElement("<button>Apply Filter</button>");
     applyButton.addEventListener('click', processListings);
 
-    const resetButton = htmlToElement("<button>Cancel</button>");
+    const resetButton = htmlToElement("<button>Cancel Filter</button>");
     resetButton.addEventListener('click', () => {
         LISTINGS.forEach((div) => { div.style.display = ""; });
     });
 
-    const filterBar = document.createElement("div");
-    filterBar.style.backgroundColor = "white";
-    filterBar.style.zIndex = 1;
-    filterBar.style.position = "fixed";
+    const convertButton = htmlToElement("<button>Convert Units</button>");
+    convertButton.addEventListener('click', convertToMetric);
 
-    filterBar.prepend(resetButton);
-    filterBar.prepend(applyButton);
-    filterBar.prepend(priceInput);
-    filterBar.prepend(htmlToElement("<label>Price</label>"));
-    filterBar.prepend(sqftInput);
-    filterBar.prepend(htmlToElement("<label>Sqft</label>"));
-    document.body.prepend(filterBar);
+    const toolbar = document.createElement("div");
+    toolbar.style.backgroundColor = "white";
+    toolbar.style.zIndex = 1;
+    toolbar.style.position = "fixed";
+
+    toolbar.prepend(convertButton);
+    toolbar.prepend(resetButton);
+    toolbar.prepend(applyButton);
+    toolbar.prepend(priceInput);
+    toolbar.prepend(htmlToElement("<label>Price</label>"));
+    toolbar.prepend(sqftInput);
+    toolbar.prepend(htmlToElement("<label>Sqft</label>"));
+    document.body.prepend(toolbar);
 };
 
 // ------------- Start of script -------------
 
-prependFilterBar();
+createToolbar();

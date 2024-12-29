@@ -11,7 +11,7 @@ const THRESHOLD = 20;
 $("li.topic").each(function () {
     let vote = 0;
     try {
-        vote = parseInt($(this).find(".total_count").text());
+        vote = parseInt($(this).find(".votes").find("span").html());
     } catch { }
     if (vote < THRESHOLD) {
         $(this).css({ "display": "none" });

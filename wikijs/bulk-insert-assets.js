@@ -141,7 +141,7 @@
                     <input type="text" readonly id="multiselect-preview" style="background: #f5f5f5; padding: 10px; border: 1px solid #ddd; margin-top: 10px; width: 100%;" value="No items selected.">
                                         <div style="margin-top: 10px; display: flex; gap: 10px;">
                         <label style="flex: 1;">Width: <input type="number" id="image-width" placeholder="auto" style="width: 100%;"></label>
-                        <label style="flex: 1;">Height: <input type="number" id="image-height" placeholder="auto" value="350" style="width: 100%;"></label>
+                        <label style="flex: 1;">Height: <input type="number" id="image-height" placeholder="auto" value="250" style="width: 100%;"></label>
                     </div>
                     <div class="v-card__actions pa-3"></div>
                 </div>

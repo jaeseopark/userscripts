@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         Porkbun Sort by Renewal Price
 // @namespace    http://tampermonkey.net/
-// @version      1.0
-// @description  Hide domains above MAX_RENEWAL_PRICE renewal price and sort by renewal price (low to high)
+// @version      1.1
+// @description  Hide domains above custom renewal price limit and sort by renewal price (low to high)
 // @author       You
 // @match        https://porkbun.com/checkout/search*
 // @grant        none
@@ -11,7 +11,17 @@
 (function() {
     'use strict';
 
-    const MAX_RENEWAL_PRICE = 15.00;
+    let DEFAULT_MAX_RENEWAL_PRICE = 15.00;
+
+    // Helper to get current max price limit from the input field
+    function getMaxPriceLimit() {
+        const input = document.querySelector('#maxRenewalPriceInput');
+        if (input) {
+            const val = parseFloat(input.value);
+            return isNaN(val) ? DEFAULT_MAX_RENEWAL_PRICE : val;
+        }
+        return DEFAULT_MAX_RENEWAL_PRICE;
+    }
 
     // Function to extract renewal price from a domain result element
     function getRenewalPrice(domainElement) {
@@ -61,6 +71,7 @@
 
     // Function to filter and sort domains by renewal price
     function filterAndSortByRenewalPrice() {
+        const maxPrice = getMaxPriceLimit();
         const container = document.querySelector('#searchResultsDomainContainer');
         if (!container) {
             console.log('Search results container not found');
@@ -75,11 +86,11 @@
             return;
         }
 
-        // Filter domains by both first year and renewal price (hide those above MAX_RENEWAL_PRICE)
+        // Filter domains by both first year and renewal price (hide those above maxPrice)
         const filteredDomains = domainElements.filter(element => {
             const renewalPrice = getRenewalPrice(element);
             const firstYearPrice = getFirstYearPrice(element);
-            return renewalPrice <= MAX_RENEWAL_PRICE && firstYearPrice < MAX_RENEWAL_PRICE;
+            return renewalPrice <= maxPrice && firstYearPrice < maxPrice;
         });
 
         // Sort filtered domains by renewal price
@@ -108,18 +119,18 @@
         });
 
         const hiddenCount = domainElements.length - filteredDomains.length;
-        console.log(`Filtered ${filteredDomains.length} domains (hidden ${hiddenCount} domains with first year or renewal price ≥ $${MAX_RENEWAL_PRICE}) and sorted by renewal price`);
+        console.log(`Filtered ${filteredDomains.length} domains (hidden ${hiddenCount} domains with first year or renewal price ≥ $${maxPrice}) and sorted by renewal price`);
         console.log(`Hidden ${tldLetterBoxes.length} TLD letter box(es)`);
         console.log(`Hidden ${sortByPriceButtons.length} sort by price button(s)`);
         
         // Show a message about filtered results
         if (hiddenCount > 0) {
-            showFilterMessage(filteredDomains.length, hiddenCount);
+            showFilterMessage(filteredDomains.length, hiddenCount, maxPrice);
         }
     }
 
     // Function to show filter message
-    function showFilterMessage(shownCount, hiddenCount) {
+    function showFilterMessage(shownCount, hiddenCount, maxPrice) {
         // Remove existing message if any
         const existingMessage = document.querySelector('#renewalPriceFilterMessage');
         if (existingMessage) {
@@ -132,7 +143,7 @@
         messageDiv.className = 'alert alert-info';
         messageDiv.style.cssText = 'margin: 10px 0; padding: 10px; border-radius: 4px;';
         messageDiv.innerHTML = `
-            <strong>Filter Applied:</strong> Showing ${shownCount} domains with both first year and renewal price < $${MAX_RENEWAL_PRICE}.
+            <strong>Filter Applied:</strong> Showing ${shownCount} domains with both first year and renewal price < $${maxPrice}.
             <span class="text-muted">(${hiddenCount} domains hidden)</span>
         `;
 
@@ -145,7 +156,6 @@
 
     // Function to check if 'show all extensions' button exists
     function hasShowAllExtensionsButton() {
-        // Look for common text patterns for show all extensions button
         const buttons = document.querySelectorAll('button, a, .btn');
         for (let button of buttons) {
             const text = button.textContent.toLowerCase().trim();
@@ -166,75 +176,97 @@
             if ((text.includes('sort') && text.includes('price')) || 
                 (text.includes('price') && text.includes('sort'))) {
                 
-                // Disable the button
                 button.disabled = true;
                 button.style.opacity = '0.5';
                 button.style.cursor = 'not-allowed';
                 button.style.pointerEvents = 'none';
-                
-                // Add a title to explain why it's disabled
                 button.title = 'Disabled by Porkbun Sort by Renewal Price userscript';
                 
-                // Remove click handlers
                 const newButton = button.cloneNode(true);
                 button.parentNode.replaceChild(newButton, button);
                 
                 disabledCount++;
-                console.log(`Disabled existing sort by price button: "${button.textContent.trim()}"`);
             }
-        }
-        
-        if (disabledCount > 0) {
-            console.log(`Disabled ${disabledCount} existing sort by price button(s)`);
         }
     }
 
-    // Function to create and add the sort button
-    function addSortButton() {
-        // Wait for the search results container to be available
+    // Function to create and add the price input and sort button
+    function addSortControls() {
         const checkForContainer = setInterval(() => {
             const container = document.querySelector('#searchResultsContainer');
             if (container && document.querySelector('#searchResultsDomainContainer')) {
                 clearInterval(checkForContainer);
                 
-                // Check if 'show all extensions' button exists - if so, don't run
                 if (hasShowAllExtensionsButton()) {
                     console.log('Show all extensions button found - skipping filter script');
                     return;
                 }
                 
-                // Disable existing sort by price buttons
                 disableExistingSortButtons();
                 
-                // Create the filter and sort button
+                if (document.querySelector('#renewalPriceFilterContainer')) {
+                    return;
+                }
+
+                // Create wrapper container for input + button
+                const controlWrapper = document.createElement('div');
+                controlWrapper.id = 'renewalPriceFilterContainer';
+                controlWrapper.style.cssText = 'display: inline-flex; align-items: center; gap: 6px; margin: 10px 0;';
+
+                // Create input element
+                const input = document.createElement('input');
+                input.id = 'maxRenewalPriceInput';
+                input.type = 'number';
+                input.value = DEFAULT_MAX_RENEWAL_PRICE;
+                input.step = '1';
+                input.min = '0';
+                input.className = 'form-control input-sm';
+                input.style.cssText = 'width: 80px; display: inline-block; text-align: center;';
+                input.title = 'Maximum Price Limit ($)';
+
+                // Create button element
                 const sortButton = document.createElement('button');
                 sortButton.id = 'sortByRenewalPriceBtn';
                 sortButton.className = 'btn btn-sm btn-primary';
-                sortButton.style.cssText = 'margin: 10px 0; margin-right: 10px;';
-                sortButton.innerHTML = `<span class="glyphicon glyphicon-filter"></span> Filter & Sort (<$${MAX_RENEWAL_PRICE})`;
+                sortButton.innerHTML = `<span class="glyphicon glyphicon-filter"></span> Filter & Sort (<$${input.value})`;
                 sortButton.onclick = filterAndSortByRenewalPrice;
 
-                // Find a good place to insert the button - before the search results
+                // Update button text when user modifies input
+                input.addEventListener('input', () => {
+                    const val = input.value || '0';
+                    sortButton.innerHTML = `<span class="glyphicon glyphicon-filter"></span> Filter & Sort (<$${val})`;
+                });
+
+                // Trigger filtering when pressing Enter inside input
+                input.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        filterAndSortByRenewalPrice();
+                    }
+                });
+
+                controlWrapper.appendChild(input);
+                controlWrapper.appendChild(sortButton);
+
+                // Insert wrapper before domain results
                 const resultsContainer = document.querySelector('#searchResultsDomainContainer');
                 if (resultsContainer && resultsContainer.parentNode) {
-                    resultsContainer.parentNode.insertBefore(sortButton, resultsContainer);
-                    console.log('Filter and sort by renewal price button added');
+                    resultsContainer.parentNode.insertBefore(controlWrapper, resultsContainer);
+                    console.log('Filter controls added');
                 }
             }
         }, 500);
 
-        // Stop checking after 10 seconds to avoid infinite loop
         setTimeout(() => clearInterval(checkForContainer), 10000);
     }
 
     // Initialize when the page loads
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', addSortButton);
+        document.addEventListener('DOMContentLoaded', addSortControls);
     } else {
-        addSortButton();
+        addSortControls();
     }
 
-    // Also handle dynamic content loading (in case results are loaded via AJAX)
+    // Handle dynamic content loading
     const observer = new MutationObserver((mutations) => {
         mutations.forEach((mutation) => {
             if (mutation.type === 'childList') {
@@ -243,11 +275,10 @@
                     node.id === 'searchResultsDomainContainer' || 
                     (node.querySelector && node.querySelector('#searchResultsDomainContainer'))
                 )) {
-                    // Check if button already exists and show all extensions button is not present
-                    if (!document.querySelector('#sortByRenewalPriceBtn') && !hasShowAllExtensionsButton()) {
+                    if (!document.querySelector('#renewalPriceFilterContainer') && !hasShowAllExtensionsButton()) {
                         setTimeout(() => {
                             disableExistingSortButtons();
-                            addSortButton();
+                            addSortControls();
                         }, 100);
                     }
                 }
